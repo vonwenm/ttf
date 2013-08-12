@@ -2,6 +2,7 @@ package ttf
 
 import (
 	"bytes"
+	//"encoding/binary"
 	"testing"
 )
 
@@ -26,14 +27,15 @@ func TestReadFile(t *testing.T) {
 }
 
 func TestTables(t *testing.T) {
-	file := bytes.NewReader([]byte{0x00, 0x01, 0x00, 0x00, 0x00, 0x20})
+	file := bytes.NewReader(roboto)
 	ttf, err := Read(file)
 	if err != nil {
 		t.Error(err)
 	}
 
+	exp := 0x11
 	tablesNum := ttf.TablesNum()
-	if tablesNum != 0x20 {
-		t.Errorf("Expected %v tables but got %v", 0x20, tablesNum)
+	if tablesNum != exp {
+		t.Errorf("Expected %v tables but got %v", exp, tablesNum)
 	}
 }
