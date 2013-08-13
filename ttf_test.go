@@ -39,3 +39,16 @@ func TestTables(t *testing.T) {
 		t.Errorf("Expected %v tables but got %v", exp, tablesNum)
 	}
 }
+
+func TestCheck(t *testing.T) {
+	file := bytes.NewReader(roboto)
+	ttf, err := Read(file)
+
+	if err != nil {
+		t.Error(err)
+	}
+
+	if err := ttf.Check(); err != nil {
+		t.Error(err)
+	}
+}
