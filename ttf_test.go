@@ -2,7 +2,7 @@ package ttf
 
 import (
 	"bytes"
-	//"encoding/binary"
+	"fmt"
 	"testing"
 )
 
@@ -50,5 +50,24 @@ func TestCheck(t *testing.T) {
 
 	if err := ttf.Check(); err != nil {
 		t.Error(err)
+	}
+}
+
+func TestMapGlyph(t *testing.T) {
+	file := bytes.NewReader(roboto)
+	ttf, err := Read(file)
+
+	if err != nil {
+		t.Error(err)
+	}
+
+	glyph, err := ttf.MapGlyph('A')
+	if err != nil {
+		t.Error(err)
+	}
+
+	exp := 36
+	if glyph != exp {
+		t.Error(fmt.Sprint("For 'A' got glyph ", glyph, " expected ", exp))
 	}
 }
