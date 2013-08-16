@@ -3,16 +3,11 @@ package ttf
 import (
 	"bytes"
 	"encoding/binary"
+	"errors"
 	"fmt"
 	"io"
 	"math"
 )
-
-type ttfError string
-
-func (e ttfError) Error() string {
-	return "TTF Error: " + string(e)
-}
 
 type tableType uint32
 
@@ -97,7 +92,7 @@ func (ttf *TTF) readTableDir() (err error) {
 	}
 
 	if data.Filetype != 0x74727565 && data.Filetype != 0x00010000 {
-		return ttfError("Invalid magic number")
+		return errors.New("Invalid magic number")
 	}
 
 	for i := 0; i < int(data.TablesNum); i++ {
@@ -139,7 +134,7 @@ var requiredTables = []tableType{CMAP, GLYF, HEAD, HHEA, HMTX, LOCA, MAXP, NAME,
 func (ttf *TTF) fontChecksum() (checksum uint32, err error) {
 	table, ok := ttf.tables[HEAD]
 	if !ok {
-		return 0, ttfError("table 'head' not found")
+		return 0, errors.New("table 'head' not found")
 	}
 
 	sect := io.NewSectionReader(ttf.file, int64(table.Offset+8), 4)
@@ -150,7 +145,7 @@ func (ttf *TTF) fontChecksum() (checksum uint32, err error) {
 func (ttf *TTF) tableReader(ttype tableType) (*io.SectionReader, error) {
 	table, ok := ttf.tables[ttype]
 	if !ok {
-		return nil, ttfError(fmt.Sprint("Table ", ttype, " not found"))
+		return nil, fmt.Errorf("Table %v not found", ttype)
 	}
 
 	return io.NewSectionReader(ttf.file, int64(table.Offset), int64(table.N)), nil
@@ -170,7 +165,7 @@ func (ttf *TTF) checkTableChecksum(ttype tableType, table tableData) error {
 	}
 
 	if table.Checksum != sum {
-		return ttfError(fmt.Sprintf("Table '%v' checksum failed.", ttype))
+		return fmt.Errorf("Table '%v' checksum failed.", ttype)
 	}
 
 	return nil
@@ -185,7 +180,7 @@ func (ttf *TTF) checkFontChecksum() error {
 
 	sum := 0xB1B0AFBA - checksum(font) + fsum
 	if fsum != sum {
-		return ttfError("Font checksum failed")
+		return errors.New("Font checksum failed")
 	}
 
 	return nil
@@ -194,7 +189,7 @@ func (ttf *TTF) checkFontChecksum() error {
 func (ttf *TTF) Check() error {
 	for _, reqType := range requiredTables {
 		if _, ok := ttf.tables[reqType]; !ok {
-			return ttfError("Missing required table " + reqType.String())
+			return fmt.Errorf("Missing required table %v", reqType)
 		}
 	}
 
@@ -299,7 +294,7 @@ func newMapper4(s *io.SectionReader) (map4 *mapper4, err error) {
 
 func (m *mapper4) Map(r rune) (int, error) {
 	if r > 0xFFFF {
-		return 0, ttfError("Unicode rune out of range")
+		return 0, errors.New("Unicode rune out of range")
 	}
 
 	r16 := uint16(r)
@@ -359,7 +354,7 @@ func (ttf *TTF) initMap(platform platformType) error {
 	case 4:
 		ttf.mapper, err = newMapper4(submap)
 	default:
-		return ttfError(fmt.Sprintf("Unsupported cmap subtable type %v", header.Type))
+		return fmt.Errorf("Unsupported cmap subtable type %v", header.Type)
 	}
 
 	return err
