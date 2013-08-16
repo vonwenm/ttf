@@ -2,7 +2,6 @@ package ttf
 
 import (
 	"bytes"
-	"fmt"
 	"testing"
 )
 
@@ -61,13 +60,14 @@ func TestMapGlyph(t *testing.T) {
 		t.Error(err)
 	}
 
-	glyph, err := ttf.MapGlyph('A')
+	g := 'A'
+	exp := 36
+	glyph, err := ttf.MapGlyph(g)
 	if err != nil {
 		t.Error(err)
 	}
 
-	exp := 36
 	if glyph != exp {
-		t.Error(fmt.Sprint("For 'A' got glyph ", glyph, " expected ", exp))
+		t.Errorf("For '%v' got glyph %v expected %v", g, glyph, exp)
 	}
 }
